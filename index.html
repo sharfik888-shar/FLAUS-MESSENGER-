@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Мессенджер</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Экран входа -->
+<section id="screen-auth" class="screen">
+  <h1>Добро пожаловать</h1>
+  <p class="hint">Войди или создай аккаунт</p>
+  <input id="auth-name" placeholder="Имя" class="reg-only hidden">
+  <input id="auth-username" placeholder="@ник (латиницей)">
+  <input id="auth-password" type="password" placeholder="Пароль (от 6 символов)">
+  <button id="auth-btn" class="primary">Войти</button>
+  <button id="auth-switch" class="link">Нет аккаунта? Регистрация</button>
+  <p id="auth-error" class="error"></p>
+</section>
+
+<!-- Главный экран -->
+<section id="screen-main" class="screen hidden">
+  <header class="topbar"><h2 id="main-title">Чаты</h2></header>
+
+  <div id="tab-chats" class="tab">
+    <input id="search" placeholder="Поиск по @нику">
+    <div id="chat-list"></div>
+  </div>
+
+  <div id="tab-calls" class="tab hidden">
+    <p class="empty">Звонки скоро появятся</p>
+  </div>
+
+  <div id="tab-profile" class="tab hidden">
+    <div id="profile-avatar" class="avatar big"></div>
+    <h3 id="profile-name"></h3>
+    <p id="profile-username" class="hint"></p>
+    <button id="logout-btn" class="link">Выйти</button>
+  </div>
+
+  <nav class="bottom-nav">
+    <button data-tab="chats" class="active">Чаты</button>
+    <button data-tab="calls">Звонки</button>
+    <button data-tab="profile">Профиль</button>
+  </nav>
+</section>
+
+<!-- Экран чата (добавим в части 3) -->
+<section id="screen-chat" class="screen hidden"></section>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
+</body>
+</html>
