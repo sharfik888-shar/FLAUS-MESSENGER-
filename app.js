@@ -1,11 +1,14 @@
+// Если код сломается, покажет окошко с ошибкой
+window.onerror = (msg) => alert('Ошибка: ' + msg);
+
 // ===== 1. Подключение к Supabase =====
 const SUPABASE_URL = 'https://ucaxncwqldckeccxikkx.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_hwZmQpjmivFPj1k1a576Iw_9bHL25uQ';
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let me = null;          // тут будет мой профиль после входа
+let me = null;          // мой профиль после входа
 let isRegister = false; // false = вход, true = регистрация
-const $ = id => document.getElementById(id); // короткая запись для поиска элемента
+const $ = id => document.getElementById(id);
 
 // ===== 2. Переключение экранов =====
 function showScreen(name) {
@@ -37,28 +40,42 @@ $('auth-btn').onclick = async () => {
     err.textContent = 'Пароль должен быть от 6 символов'; return;
   }
 
-  // Supabase требует почту, поэтому делаем из ника «почту» (пользователь её не видит)
+  // Supabase требует почту, поэтому делаем её из ника (человек её не видит)
   const email = username + '@messenger.app';
 
-  if (isRegister) {
-    if (!name) { err.textContent = 'Введи имя'; return; }
-    const { data, error } = await db.auth.signUp({ email, password });
-    if (error) {
-      err.textContent = error.message.includes('already')
-        ? 'Такой ник уже занят' : error.message;
-      return;
+  try {
+    if (isRegister) {
+      if (!name) { err.textContent = 'Введи имя'; return; }
+
+      const { data, error } = await db.auth.signUp({ email, password });
+      if (error) {
+        err.textContent = error.message.includes('already')
+          ? 'Такой ник уже занят' : error.message;
+        return;
+      }
+      if (!data.session) {
+        err.textContent = 'В Supabase выключи Confirm email'; return;
+      }
+
+      const { error: e2 } = await db.from('profiles')
+        .insert({ id: data.user.id, username, name });
+      if (e2) {
+        await db.auth.signOut();
+        err.textContent = 'Не удалось создать профиль: ' + e2.message;
+        return;
+      }
+    } else {
+      const { error } = await db.auth.signInWithPassword({ email, password });
+      if (error) {
+        err.textContent = error.message.includes('Invalid login')
+          ? 'Неверный ник или пароль' : error.message;
+        return;
+      }
     }
-    if (!data.session) {
-      err.textContent = 'В Supabase выключи Confirm email'; return;
-    }
-    const { error: e2 } = await db.from('profiles')
-      .insert({ id: data.user.id, username, name });
-    if (e2) { err.textContent = 'Такой ник уже занят'; return; }
-  } else {
-    const { error } = await db.auth.signInWithPassword({ email, password });
-    if (error) { err.textContent = 'Неверный ник или пароль'; return; }
+    start();
+  } catch (e) {
+    err.textContent = 'Ошибка: ' + e.message;
   }
-  start();
 };
 
 // ===== 4. Запуск после входа =====
@@ -68,7 +85,13 @@ async function start() {
 
   const { data: profile } = await db.from('profiles')
     .select('*').eq('id', data.user.id).single();
-  if (!profile) { await db.auth.signOut(); showScreen('auth'); return; }
+
+  if (!profile) {
+    await db.auth.signOut();
+    showScreen('auth');
+    $('auth-error').textContent = 'Профиль не найден. Зарегистрируйся заново';
+    return;
+  }
 
   me = profile;
   $('profile-name').textContent = me.name;
